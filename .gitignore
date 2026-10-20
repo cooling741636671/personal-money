@@ -8,3 +8,5 @@ node_modules/
 .idea/
 .vscode/
 *.local
+standalone.html
+build-standalone.js
