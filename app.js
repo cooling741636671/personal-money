@@ -50,7 +50,15 @@ const els = {
   reportBalance: document.getElementById("report-balance"),
   reportReminder: document.getElementById("report-reminder"),
   reminderBox: document.getElementById("reminder-box"),
+  previewFrame: document.getElementById("preview-frame"),
+  exportModal: document.getElementById("export-modal"),
+  exportPreview: document.getElementById("export-preview"),
+  exportModalClose: document.getElementById("export-modal-close"),
+  exportModalDownload: document.getElementById("export-modal-download"),
 };
+
+let lastExportUrl = "";
+let lastExportName = "";
 
 let state = loadState();
 
@@ -226,6 +234,7 @@ function renderReport() {
     custom || `${balanceText}元已存入零花钱，留作下月机动备用金~`;
   els.reportReminder.textContent = reminderText;
   els.reminderBox.classList.toggle("hidden", state.expenses.length === 0 && !custom);
+  requestAnimationFrame(scalePreview);
 }
 
 function sync() {
@@ -289,34 +298,116 @@ function resetSample() {
   els.exportStatus.textContent = "已恢复示例数据。";
 }
 
+function isWeChat() {
+  return /MicroMessenger/i.test(navigator.userAgent || "");
+}
+
+function isMobile() {
+  return window.matchMedia("(max-width: 980px)").matches || /Mobile|Android|iPhone/i.test(navigator.userAgent || "");
+}
+
+function scalePreview() {
+  const frame = els.previewFrame;
+  const report = els.report;
+  if (!frame || !report) return;
+
+  report.style.transform = "";
+  report.style.width = "720px";
+
+  if (!isMobile()) {
+    frame.style.height = "";
+    return;
+  }
+
+  const frameWidth = frame.clientWidth || window.innerWidth - 24;
+  const scale = Math.min(1, frameWidth / 720);
+  report.style.transform = `scale(${scale})`;
+  frame.style.height = `${Math.ceil(report.scrollHeight * scale)}px`;
+}
+
+function openExportModal(dataUrl, filename) {
+  lastExportUrl = dataUrl;
+  lastExportName = filename;
+  els.exportPreview.src = dataUrl;
+  els.exportModal.classList.remove("hidden");
+  document.body.style.overflow = "hidden";
+
+  if (isWeChat()) {
+    els.exportModalDownload.classList.add("hidden");
+    els.exportStatus.textContent = "请长按图片保存，再发给媳妇。";
+  } else {
+    els.exportModalDownload.classList.remove("hidden");
+    els.exportStatus.textContent = `已生成：${filename}`;
+  }
+}
+
+function closeExportModal() {
+  els.exportModal.classList.add("hidden");
+  document.body.style.overflow = "";
+}
+
+function downloadDataUrl(dataUrl, filename) {
+  const link = document.createElement("a");
+  link.download = filename;
+  link.href = dataUrl;
+  link.rel = "noopener";
+  document.body.appendChild(link);
+  link.click();
+  link.remove();
+}
+
 async function exportImage() {
   readFormIntoState();
   renderReport();
+  scalePreview();
   els.exportStatus.textContent = "正在生成图片…";
   els.exportBtn.disabled = true;
 
+  if (typeof html2canvas !== "function") {
+    els.exportStatus.textContent = "导出组件加载失败，请刷新页面后重试。";
+    els.exportBtn.disabled = false;
+    return;
+  }
+
+  const prevTransform = els.report.style.transform;
+  const prevWidth = els.report.style.width;
+
   try {
+    // 导出时用完整宽度，避免手机缩放影响清晰度
+    els.report.style.transform = "none";
+    els.report.style.width = "720px";
+
     const canvas = await html2canvas(els.report, {
       backgroundColor: "#fbfcfe",
-      scale: 2,
+      scale: Math.min(2, window.devicePixelRatio || 2),
       useCORS: true,
+      allowTaint: true,
       logging: false,
+      width: 720,
+      windowWidth: 720,
     });
 
     const now = new Date();
     const stamp = `${now.getFullYear()}${String(now.getMonth() + 1).padStart(2, "0")}`;
     const filename = `家庭收支报表-${stamp}.png`;
+    const dataUrl = canvas.toDataURL("image/png");
 
-    const link = document.createElement("a");
-    link.download = filename;
-    link.href = canvas.toDataURL("image/png");
-    link.click();
-
-    els.exportStatus.textContent = `已导出：${filename}`;
+    // 微信 / 手机：弹层长按保存；电脑：尝试直接下载，并仍展示预览
+    if (isWeChat() || isMobile()) {
+      openExportModal(dataUrl, filename);
+    } else {
+      try {
+        downloadDataUrl(dataUrl, filename);
+      } catch (_) {}
+      openExportModal(dataUrl, filename);
+    }
   } catch (err) {
     console.error(err);
-    els.exportStatus.textContent = "导出失败，请换 Chrome / Edge 再试。";
+    els.exportStatus.textContent = "导出失败，请刷新后重试；微信里也可截图预览区域。";
   } finally {
+    els.report.style.transform = prevTransform;
+    els.report.style.width = prevWidth;
+    scalePreview();
     els.exportBtn.disabled = false;
   }
 }
@@ -332,8 +423,19 @@ function bind() {
   els.exportBtn.addEventListener("click", exportImage);
   els.saveBtn.addEventListener("click", saveToBrowser);
   els.resetBtn.addEventListener("click", resetSample);
+  els.exportModalClose.addEventListener("click", closeExportModal);
+  els.exportModal.addEventListener("click", (e) => {
+    if (e.target === els.exportModal) closeExportModal();
+  });
+  els.exportModalDownload.addEventListener("click", () => {
+    if (!lastExportUrl) return;
+    downloadDataUrl(lastExportUrl, lastExportName || "家庭收支报表.png");
+  });
+  window.addEventListener("resize", scalePreview);
+  window.addEventListener("orientationchange", () => setTimeout(scalePreview, 100));
 }
 
 fillForm();
 renderReport();
 bind();
+scalePreview();
