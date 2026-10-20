@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>家庭收支报表</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="style.css" />
+  <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
+</head>
+<body>
+  <div class="app">
+    <aside class="editor">
+      <h1 class="editor-title">编辑本月数据</h1>
+      <p class="editor-hint">改完右侧会实时预览，点「导出图片」发给媳妇即可。</p>
+
+      <section class="editor-section">
+        <label>报表标题</label>
+        <input id="title" type="text" />
+        <label>副标题</label>
+        <input id="subtitle" type="text" />
+      </section>
+
+      <section class="editor-section">
+        <h2>收入与结转</h2>
+        <label>本月实发工资（元）</label>
+        <input id="salary" type="number" step="0.01" min="0" />
+        <label>上月结转（元）</label>
+        <input id="carryover" type="number" step="0.01" min="0" />
+      </section>
+
+      <section class="editor-section">
+        <div class="section-head">
+          <h2>支出明细</h2>
+          <button type="button" id="add-expense" class="btn-secondary">＋ 添加支出</button>
+        </div>
+        <div id="expense-list" class="expense-list"></div>
+      </section>
+
+      <section class="editor-section">
+        <label>零花钱提醒文案（留空则用默认）</label>
+        <textarea id="reminder" rows="3" placeholder="例如：1150元已存入零花钱，留作下月机动备用金~"></textarea>
+      </section>
+
+      <div class="editor-actions">
+        <button type="button" id="export-btn" class="btn-primary">导出图片</button>
+        <button type="button" id="save-btn" class="btn-secondary">保存到浏览器</button>
+        <button type="button" id="reset-btn" class="btn-ghost">恢复示例</button>
+      </div>
+      <p id="export-status" class="export-status" aria-live="polite"></p>
+    </aside>
+
+    <main class="preview-wrap">
+      <div id="report" class="report">
+        <header class="report-header">
+          <h1 id="report-title">本月家庭收支报表 <span class="emoji">💖</span></h1>
+          <p id="report-subtitle">这爱的家庭账本 <span class="emoji">🧡</span></p>
+        </header>
+
+        <div class="top-cards">
+          <div class="card card-income">
+            <div class="card-title">收入</div>
+            <div class="card-body">
+              <div class="card-icon" aria-hidden="true">
+                <svg viewBox="0 0 48 48" fill="none"><rect x="8" y="14" width="32" height="24" rx="3" fill="#5B9BD5"/><rect x="14" y="10" width="20" height="6" rx="1.5" fill="#7EB6E8"/><circle cx="24" cy="26" r="5" fill="#FFF3C4"/><path d="M24 23v6M21 26h6" stroke="#E8A838" stroke-width="1.5"/></svg>
+              </div>
+              <div class="card-meta">
+                <div class="card-label">本月实发工资</div>
+                <div class="card-amount" id="report-salary">¥0.00</div>
+              </div>
+            </div>
+          </div>
+          <div class="card card-carry">
+            <div class="card-title">期初结余</div>
+            <div class="card-body">
+              <div class="card-icon" aria-hidden="true">
+                <svg viewBox="0 0 48 48" fill="none"><ellipse cx="24" cy="30" rx="14" ry="10" fill="#7BC67E"/><ellipse cx="24" cy="22" rx="10" ry="8" fill="#98D49A"/><circle cx="20" cy="20" r="2" fill="#2F6B32"/><circle cx="28" cy="20" r="2" fill="#2F6B32"/><ellipse cx="24" cy="26" rx="3" ry="2" fill="#E8F5E9"/><rect x="21" y="12" width="6" height="4" rx="1" fill="#F4C430"/></svg>
+              </div>
+              <div class="card-meta">
+                <div class="card-label">上月结转</div>
+                <div class="card-amount" id="report-carryover">¥0.00</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="disposable-bar">
+          本月可支配总额 <strong id="report-disposable">¥0.00</strong>
+        </div>
+
+        <div class="table-wrap">
+          <table class="expense-table">
+            <thead>
+              <tr>
+                <th class="col-cat">类别</th>
+                <th class="col-item">项目</th>
+                <th class="col-amount">金额</th>
+                <th class="col-note">备注</th>
+              </tr>
+            </thead>
+            <tbody id="report-expenses"></tbody>
+            <tfoot>
+              <tr class="total-row">
+                <td colspan="3">
+                  <span class="total-label">
+                    <span class="check-icon" aria-hidden="true">☑</span>
+                    本月合计支出
+                    <strong id="report-total-expense">-¥0.00</strong>
+                  </span>
+                </td>
+                <td class="balance-cell">
+                  <span id="report-balance" class="balance-box">¥0.00</span>
+                </td>
+              </tr>
+            </tfoot>
+          </table>
+        </div>
+
+        <div class="reminder" id="reminder-box">
+          <div class="reminder-title">零花钱提醒</div>
+          <div class="reminder-text" id="report-reminder"></div>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>
