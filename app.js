@@ -14,18 +14,18 @@ const CATEGORY_PRESETS = [
 const SAMPLE_DATA = {
   title: "本月家庭收支报表",
   subtitle: "这爱的家庭账本",
-  salary: 10624,
-  carryover: 400,
+  salary: 8000,
+  carryover: 500,
   reminder: "",
   expenses: [
-    { category: "固定支出", icon: "🏠", item: "房贷", amount: 2700.8, note: "月度必还" },
-    { category: "信用还款", icon: "💳", item: "花呗 (2480.88+28)", amount: 2508.88, note: "已合并结算" },
-    { category: "健康支出", icon: "➕", item: "中药+快递费 2100+65", amount: 2165, note: "外卖/采买" },
-    { category: "家庭转账", icon: "💗", item: "转给媳妇", amount: 2100, note: "——" },
+    { category: "固定支出", icon: "🏠", item: "房租（示例）", amount: 2500, note: "月度固定" },
+    { category: "日常开销", icon: "🛒", item: "生活采买（示例）", amount: 1200, note: "食材/日用品" },
+    { category: "餐饮外卖", icon: "🍜", item: "餐饮（示例）", amount: 800, note: "——" },
+    { category: "家庭转账", icon: "💗", item: "家庭共用（示例）", amount: 1500, note: "——" },
   ],
 };
 
-const STORAGE_KEY = "family-money-report-v1";
+const STORAGE_KEY = "family-money-report-v2";
 
 const els = {
   title: document.getElementById("title"),
