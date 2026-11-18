@@ -253,6 +253,25 @@ body {
   line-height: 1.5;
 }
 
+.voice-fallback {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  margin-top: 10px;
+}
+
+.voice-fallback input {
+  flex: 1;
+  width: auto;
+  min-width: 0;
+}
+
+.voice-fallback .btn-secondary {
+  flex: none;
+  padding: 9px 14px;
+  white-space: nowrap;
+}
+
 .voice-status {
   min-height: 1.2em;
   margin: 8px 0 0;

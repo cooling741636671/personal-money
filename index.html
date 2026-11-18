@@ -20,6 +20,16 @@
           <button type="button" id="voice-btn" class="btn-voice">🎤 点一下说话</button>
         </div>
         <p class="voice-hint" id="voice-hint">可以说：「工资八千」「结转五百」「支出房租两千五」</p>
+        <div class="voice-fallback">
+          <input
+            id="voice-text"
+            type="text"
+            enterkeyhint="send"
+            autocomplete="off"
+            placeholder="点这里，用键盘麦克风说，或直接打字"
+          />
+          <button type="button" id="voice-text-btn" class="btn-secondary">录入</button>
+        </div>
         <p class="voice-status" id="voice-status" aria-live="polite"></p>
       </section>
 

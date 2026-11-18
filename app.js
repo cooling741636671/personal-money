@@ -58,6 +58,8 @@ const els = {
   voiceBtn: document.getElementById("voice-btn"),
   voiceStatus: document.getElementById("voice-status"),
   voiceHint: document.getElementById("voice-hint"),
+  voiceText: document.getElementById("voice-text"),
+  voiceTextBtn: document.getElementById("voice-text-btn"),
 };
 
 let lastExportUrl = "";
@@ -419,30 +421,32 @@ function parseSpokenAmount(text) {
   let n = 0;
   let current = 0;
   let hasUnit = false;
+  let lastUnit = 1;
+  let sawZero = false;
   for (const ch of text) {
+    if (ch === "零" || ch === "〇") {
+      sawZero = true;
+      current = 0;
+      continue;
+    }
     if (map[ch] != null) {
       current = map[ch];
       continue;
     }
-    if (ch === "十") {
-      n += (current || 1) * 10;
-      current = 0;
-      hasUnit = true;
-    } else if (ch === "百") {
-      n += (current || 1) * 100;
-      current = 0;
-      hasUnit = true;
-    } else if (ch === "千") {
-      n += (current || 1) * 1000;
-      current = 0;
-      hasUnit = true;
-    } else if (ch === "万") {
-      n = (n + current) * 10000;
-      current = 0;
-      hasUnit = true;
-    }
+    const unit = { 十: 10, 百: 100, 千: 1000, 万: 10000 }[ch];
+    if (!unit) continue;
+    if (unit === 10000) n = (n + current) * unit;
+    else n += (current || 1) * unit;
+    current = 0;
+    hasUnit = true;
+    lastUnit = unit;
+    sawZero = false;
   }
-  n += current;
+  if (current) {
+    // 「两千五」= 2500，「一万五」= 15000；「两千零五」仍是 2005。
+    n += !sawZero && lastUnit >= 100 ? current * (lastUnit / 10) : current;
+    hasUnit = true;
+  }
   return hasUnit || n > 0 ? n : null;
 }
 
@@ -474,7 +478,7 @@ function guessCategory(text) {
   return "其它支出";
 }
 
-function applyVoiceCommand(raw) {
+function applyVoiceCommand(raw, note = "语音录入") {
   const text = String(raw || "")
     .replace(/\s+/g, "")
     .replace(/[，。！？、]/g, "");
@@ -516,7 +520,7 @@ function applyVoiceCommand(raw) {
       icon: iconFor(category),
       item,
       amount: amount || 0,
-      note: "语音录入",
+      note,
     });
     fillForm();
     renderReport();
@@ -538,6 +542,21 @@ function setVoiceUi(isOn, message) {
   if (message != null) els.voiceStatus.textContent = message;
 }
 
+const VOICE_FALLBACK_TIP =
+  "请点下方输入框，再用键盘上的麦克风说话，说完点「录入」。也可以右上角 ··· → 在浏览器打开后再用上方按钮。";
+
+function focusVoiceFallback(message) {
+  if (message) els.voiceStatus.textContent = message;
+  els.voiceText.focus();
+}
+
+function submitVoiceText() {
+  const raw = els.voiceText.value;
+  const result = applyVoiceCommand(raw, "快捷录入");
+  els.voiceStatus.textContent = result;
+  if (result.startsWith("已")) els.voiceText.value = "";
+}
+
 function stopVoice() {
   if (recognition) {
     try {
@@ -548,12 +567,14 @@ function stopVoice() {
 }
 
 function startVoice() {
+  if (isWeChat()) {
+    focusVoiceFallback(`微信禁止了网页语音识别，所以上方按钮会失败。${VOICE_FALLBACK_TIP}`);
+    return;
+  }
+
   const rec = getSpeechRecognition();
   if (!rec) {
-    const tip = isWeChat()
-      ? "当前微信内置浏览器不支持网页语音识别。可点输入框，用系统键盘自带麦克风；或右上角 ··· → 在浏览器打开后再试。"
-      : "当前浏览器不支持语音识别，请用 Chrome / Edge，或用系统键盘麦克风。";
-    els.voiceStatus.textContent = tip;
+    focusVoiceFallback(`当前浏览器不支持网页语音识别。${VOICE_FALLBACK_TIP}`);
     return;
   }
 
@@ -565,13 +586,22 @@ function startVoice() {
 
   recognition.onstart = () => setVoiceUi(true, "正在听，请说话…");
   recognition.onerror = (e) => {
+    const code = e.error || "";
+    const fallbackCodes = {
+      "service-not-allowed": `当前浏览器禁止了网页语音服务。${VOICE_FALLBACK_TIP}`,
+      "not-allowed": `没有麦克风权限。可以到系统设置里允许，也可以点下方输入框，用键盘麦克风说话后点「录入」。`,
+      network: `连不上网页语音服务（国内网络经常如此）。${VOICE_FALLBACK_TIP}`,
+    };
+    if (fallbackCodes[code]) {
+      setVoiceUi(false);
+      focusVoiceFallback(fallbackCodes[code]);
+      return;
+    }
     const map = {
-      "not-allowed": "没有麦克风权限，请在系统设置里允许。",
       "no-speech": "没有听到声音，请再试一次。",
-      network: "语音服务网络异常，请稍后重试。",
       aborted: "",
     };
-    setVoiceUi(false, map[e.error] || `语音失败：${e.error || "未知错误"}`);
+    setVoiceUi(false, map[code] ?? `语音失败：${code || "未知错误"}`);
   };
   recognition.onend = () => setVoiceUi(false, els.voiceStatus.textContent || "");
   recognition.onresult = (event) => {
@@ -584,7 +614,7 @@ function startVoice() {
     recognition.start();
   } catch (err) {
     console.error(err);
-    els.voiceStatus.textContent = "无法启动语音，请刷新后重试。";
+    focusVoiceFallback(`无法启动网页语音。${VOICE_FALLBACK_TIP}`);
   }
 }
 
@@ -608,6 +638,13 @@ function bind() {
   els.saveBtn.addEventListener("click", saveToBrowser);
   els.resetBtn.addEventListener("click", resetSample);
   els.voiceBtn.addEventListener("click", toggleVoice);
+  els.voiceTextBtn.addEventListener("click", submitVoiceText);
+  els.voiceText.addEventListener("keydown", (e) => {
+    if (e.key === "Enter") {
+      e.preventDefault();
+      submitVoiceText();
+    }
+  });
   els.exportModalClose.addEventListener("click", closeExportModal);
   els.exportModal.addEventListener("click", (e) => {
     if (e.target === els.exportModal) closeExportModal();
@@ -624,5 +661,5 @@ bind();
 
 if (isWeChat()) {
   els.voiceHint.textContent =
-    "可以说：「工资八千」「结转五百」「支出房租两千五」。若微信不支持语音，可用输入框键盘麦克风，或右上角用浏览器打开。";
+    "微信里网页语音会被禁止。请点下方输入框，用键盘上的麦克风说「工资八千」「结转五百」「支出房租两千五」，说完点录入。";
 }
