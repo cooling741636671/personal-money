@@ -10,3 +10,6 @@ node_modules/
 *.local
 standalone.html
 build-standalone.js
+assets/lotus-mask-debug.jpg
+assets/lotus.jpg
+tools/
