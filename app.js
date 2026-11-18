@@ -362,10 +362,6 @@ async function exportImage() {
   clone.id = "report-export-clone";
   clone.style.cssText =
     "width:720px;max-width:720px;margin:0;transform:none;box-sizing:border-box;";
-  clone.querySelectorAll(".anim-float, .anim-shimmer, .hero-lotus, .hero-glow").forEach((node) => {
-    node.style.animation = "none";
-    node.style.transform = "none";
-  });
   host.appendChild(clone);
   document.body.appendChild(host);
 

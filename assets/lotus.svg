@@ -1,0 +1,57 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 160" fill="none" aria-hidden="true">
+  <defs>
+    <linearGradient id="petalL" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#ffd6e4"/>
+      <stop offset="55%" stop-color="#f4a4bc"/>
+      <stop offset="100%" stop-color="#e883a3"/>
+    </linearGradient>
+    <linearGradient id="petalM" x1="0.5" y1="0" x2="0.5" y2="1">
+      <stop offset="0%" stop-color="#ffe8f0"/>
+      <stop offset="60%" stop-color="#f6b2c7"/>
+      <stop offset="100%" stop-color="#e891ad"/>
+    </linearGradient>
+    <linearGradient id="petalR" x1="1" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#ffd6e4"/>
+      <stop offset="55%" stop-color="#f4a4bc"/>
+      <stop offset="100%" stop-color="#e883a3"/>
+    </linearGradient>
+    <linearGradient id="leaf" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#b7dfb4"/>
+      <stop offset="100%" stop-color="#6faf74"/>
+    </linearGradient>
+    <radialGradient id="center" cx="50%" cy="45%" r="55%">
+      <stop offset="0%" stop-color="#ffe9a8"/>
+      <stop offset="70%" stop-color="#f0c35a"/>
+      <stop offset="100%" stop-color="#d9a63a"/>
+    </radialGradient>
+  </defs>
+
+  <!-- left leaf -->
+  <path d="M48 118c28-22 62-28 92-18-38 18-66 34-92 42-8-6-8-16 0-24z" fill="url(#leaf)" opacity="0.9"/>
+  <!-- right leaf -->
+  <path d="M272 118c-28-22-62-28-92-18 38 18 66 34 92 42 8-6 8-16 0-24z" fill="url(#leaf)" opacity="0.9"/>
+
+  <!-- back petals -->
+  <path d="M160 118c-18-42-8-78 10-98 4 28 8 62-10 98z" fill="url(#petalM)" opacity="0.85"/>
+  <path d="M160 118c18-42 8-78-10-98-4 28-8 62 10 98z" fill="url(#petalM)" opacity="0.85"/>
+
+  <!-- side petals -->
+  <path d="M160 122c-46-18-78-8-98 18 36-6 70-4 98-18z" fill="url(#petalL)"/>
+  <path d="M160 122c46-18 78-8 98 18-36-6-70-4-98-18z" fill="url(#petalR)"/>
+  <path d="M160 120c-40-34-58-20-74 8 30-2 54 2 74-8z" fill="url(#petalL)" opacity="0.95"/>
+  <path d="M160 120c40-34 58-20 74 8-30-2-54 2-74-8z" fill="url(#petalR)" opacity="0.95"/>
+
+  <!-- front petals -->
+  <path d="M160 126c-28-56-10-90 12-108-2 34-4 72-12 108z" fill="url(#petalM)"/>
+  <path d="M160 126c28-56 10-90-12-108 2 34 4 72 12 108z" fill="url(#petalM)"/>
+  <path d="M160 128c-16-60 0-96 16-112-8 36-12 74-16 112z" fill="#ffe6ef"/>
+  <path d="M160 128c16-60 0-96-16-112 8 36 12 74 16 112z" fill="#ffdce9"/>
+
+  <!-- seed center -->
+  <ellipse cx="160" cy="118" rx="18" ry="10" fill="url(#center)"/>
+  <circle cx="154" cy="116" r="1.6" fill="#c9892f" opacity="0.7"/>
+  <circle cx="160" cy="114" r="1.6" fill="#c9892f" opacity="0.7"/>
+  <circle cx="166" cy="116" r="1.6" fill="#c9892f" opacity="0.7"/>
+  <circle cx="157" cy="120" r="1.4" fill="#c9892f" opacity="0.55"/>
+  <circle cx="163" cy="120" r="1.4" fill="#c9892f" opacity="0.55"/>
+</svg>

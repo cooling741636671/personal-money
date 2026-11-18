@@ -55,82 +55,6 @@ body {
   margin: 0 auto;
 }
 
-.anim-rise {
-  animation: rise-in 0.7s ease both;
-}
-
-.anim-rise.delay-1 {
-  animation-delay: 0.12s;
-}
-
-@keyframes rise-in {
-  from {
-    opacity: 0;
-    transform: translateY(18px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-.anim-float {
-  animation: soft-float 4.8s ease-in-out infinite;
-}
-
-.anim-float.delay-float {
-  animation-delay: 1.2s;
-}
-
-@keyframes soft-float {
-  0%,
-  100% {
-    transform: translateY(0);
-  }
-  50% {
-    transform: translateY(-5px);
-  }
-}
-
-.anim-shimmer {
-  position: relative;
-  overflow: hidden;
-}
-
-.anim-shimmer::after {
-  content: "";
-  position: absolute;
-  inset: 0;
-  background: linear-gradient(
-    110deg,
-    transparent 20%,
-    rgba(255, 255, 255, 0.45) 45%,
-    transparent 70%
-  );
-  transform: translateX(-120%);
-  animation: shimmer 3.6s ease-in-out infinite;
-}
-
-@keyframes shimmer {
-  0%,
-  35% {
-    transform: translateX(-120%);
-  }
-  70%,
-  100% {
-    transform: translateX(120%);
-  }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .anim-rise,
-  .anim-float,
-  .anim-shimmer::after,
-  .hero-lotus {
-    animation: none !important;
-  }
-}
-
 /* ---------- Editor ---------- */
 .editor {
   position: sticky;
@@ -401,51 +325,16 @@ body {
 }
 
 .hero-deco {
-  position: relative;
-  width: 120px;
-  height: 120px;
-  margin: 0 auto 10px;
+  display: flex;
+  justify-content: center;
+  margin: 0 auto 8px;
 }
 
 .hero-lotus {
-  position: relative;
-  z-index: 1;
-  width: 120px;
-  height: 120px;
-  object-fit: cover;
-  border-radius: 50%;
-  box-shadow: 0 10px 24px rgba(220, 120, 150, 0.22);
-  animation: lotus-bob 5s ease-in-out infinite;
-}
-
-.hero-glow {
-  position: absolute;
-  inset: -8px;
-  border-radius: 50%;
-  background: radial-gradient(circle, rgba(255, 190, 210, 0.55), transparent 70%);
-  animation: glow-pulse 3.2s ease-in-out infinite;
-}
-
-@keyframes lotus-bob {
-  0%,
-  100% {
-    transform: translateY(0) rotate(-1deg);
-  }
-  50% {
-    transform: translateY(-6px) rotate(1deg);
-  }
-}
-
-@keyframes glow-pulse {
-  0%,
-  100% {
-    opacity: 0.55;
-    transform: scale(1);
-  }
-  50% {
-    opacity: 0.9;
-    transform: scale(1.06);
-  }
+  display: block;
+  width: min(220px, 68vw);
+  height: auto;
+  filter: drop-shadow(0 8px 14px rgba(200, 110, 140, 0.18));
 }
 
 .report-header h1 {
@@ -820,14 +709,11 @@ body {
   }
 
   .hero-deco {
-    width: 88px;
-    height: 88px;
-    margin-bottom: 6px;
+    margin-bottom: 4px;
   }
 
   .hero-lotus {
-    width: 88px;
-    height: 88px;
+    width: min(180px, 72vw);
   }
 
   .report-header h1 {
