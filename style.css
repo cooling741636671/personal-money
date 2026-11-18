@@ -308,50 +308,82 @@ body {
   width: 100%;
   max-width: 720px;
   margin: 0 auto;
-  padding: 36px 40px 28px;
-  background:
-    radial-gradient(circle at 8% 6%, rgba(255, 220, 230, 0.55), transparent 28%),
-    radial-gradient(circle at 92% 8%, rgba(210, 235, 255, 0.55), transparent 26%),
-    radial-gradient(circle at 50% 100%, rgba(255, 245, 200, 0.35), transparent 40%),
-    #fbfcfe;
+  padding: 0 0 28px;
+  background: #fbfcfe;
   border-radius: 22px;
   box-shadow: var(--shadow);
   border: 1px solid #e6eef6;
+  overflow: hidden;
 }
 
 .report-header {
+  position: relative;
   text-align: center;
-  margin-bottom: 22px;
-}
-
-.hero-deco {
-  width: min(320px, 86%);
-  margin: 0 auto 12px;
-  border-radius: 16px;
+  margin: 0 0 22px;
+  min-height: 210px;
   overflow: hidden;
-  box-shadow: 0 10px 22px rgba(40, 80, 50, 0.16);
 }
 
 .hero-lotus {
+  position: absolute;
+  inset: 0;
   display: block;
   width: 100%;
-  height: 150px;
+  height: 100%;
   object-fit: cover;
-  object-position: center 72%;
+  object-position: center 68%;
+  transform: scale(1.02);
+}
+
+.report-header-overlay {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  min-height: 210px;
+  padding: 28px 24px 22px;
+  background:
+    linear-gradient(
+      180deg,
+      rgba(18, 40, 28, 0.12) 0%,
+      rgba(18, 40, 28, 0.18) 35%,
+      rgba(12, 28, 22, 0.62) 100%
+    );
 }
 
 .report-header h1 {
   margin: 0;
-  font-size: 30px;
+  font-size: 28px;
   font-weight: 700;
   letter-spacing: 0.02em;
-  color: #243447;
+  color: #fff;
+  text-shadow: 0 2px 10px rgba(0, 0, 0, 0.35);
 }
 
 .report-header p {
   margin: 8px 0 0;
-  font-size: 15px;
-  color: #8a95a5;
+  font-size: 14px;
+  color: rgba(255, 255, 255, 0.9);
+  text-shadow: 0 1px 6px rgba(0, 0, 0, 0.3);
+}
+
+.report-body {
+  padding: 0 40px;
+}
+
+.report > .top-cards,
+.report > .disposable-bar,
+.report > .table-wrap,
+.report > .reminder {
+  margin-left: 40px;
+  margin-right: 40px;
+}
+
+.report > .reminder {
+  width: auto;
+  margin-left: 40px;
+  margin-right: 40px;
 }
 
 .emoji {
@@ -703,22 +735,26 @@ body {
     width: 100% !important;
     max-width: 100%;
     transform: none !important;
-    padding: 18px 12px 14px;
+    padding: 0 0 16px;
     border-radius: 16px;
   }
 
   .report-header {
+    min-height: 168px;
     margin-bottom: 14px;
   }
 
-  .hero-deco {
-    width: min(100%, 300px);
-    margin-bottom: 8px;
-    border-radius: 12px;
+  .report-header-overlay {
+    min-height: 168px;
+    padding: 20px 16px 16px;
   }
 
-  .hero-lotus {
-    height: 120px;
+  .report > .top-cards,
+  .report > .disposable-bar,
+  .report > .table-wrap,
+  .report > .reminder {
+    margin-left: 12px;
+    margin-right: 12px;
   }
 
   .report-header h1 {
@@ -783,8 +819,7 @@ body {
   }
 
   .reminder {
-    width: 100%;
-    margin-left: 0;
+    width: auto;
   }
 
   .export-modal {
