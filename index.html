@@ -13,6 +13,15 @@
       <h1 class="editor-title">编辑本月数据</h1>
       <p class="editor-hint">改完数据后下方会实时预览。微信里点「导出图片」后，长按图片保存即可。</p>
 
+      <section class="editor-section voice-section">
+        <div class="section-head">
+          <h2>语音录入</h2>
+          <button type="button" id="voice-btn" class="btn-voice">🎤 点一下说话</button>
+        </div>
+        <p class="voice-hint" id="voice-hint">可以说：「工资八千」「结转五百」「支出房租两千五」</p>
+        <p class="voice-status" id="voice-status" aria-live="polite"></p>
+      </section>
+
       <section class="editor-section">
         <label>报表标题</label>
         <input id="title" type="text" />
@@ -23,9 +32,9 @@
       <section class="editor-section">
         <h2>收入与结转</h2>
         <label>本月实发工资（元）</label>
-        <input id="salary" type="number" step="0.01" min="0" />
+        <input id="salary" type="number" inputmode="decimal" step="0.01" min="0" />
         <label>上月结转（元）</label>
-        <input id="carryover" type="number" step="0.01" min="0" />
+        <input id="carryover" type="number" inputmode="decimal" step="0.01" min="0" />
       </section>
 
       <section class="editor-section">

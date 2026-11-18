@@ -55,10 +55,15 @@ const els = {
   exportPreview: document.getElementById("export-preview"),
   exportModalClose: document.getElementById("export-modal-close"),
   exportModalDownload: document.getElementById("export-modal-download"),
+  voiceBtn: document.getElementById("voice-btn"),
+  voiceStatus: document.getElementById("voice-status"),
+  voiceHint: document.getElementById("voice-hint"),
 };
 
 let lastExportUrl = "";
 let lastExportName = "";
+let recognition = null;
+let listening = false;
 
 let state = loadState();
 
@@ -234,7 +239,6 @@ function renderReport() {
     custom || `${balanceText}元已存入零花钱，留作下月机动备用金~`;
   els.reportReminder.textContent = reminderText;
   els.reminderBox.classList.toggle("hidden", state.expenses.length === 0 && !custom);
-  requestAnimationFrame(scalePreview);
 }
 
 function sync() {
@@ -306,25 +310,6 @@ function isMobile() {
   return window.matchMedia("(max-width: 980px)").matches || /Mobile|Android|iPhone/i.test(navigator.userAgent || "");
 }
 
-function scalePreview() {
-  const frame = els.previewFrame;
-  const report = els.report;
-  if (!frame || !report) return;
-
-  report.style.transform = "";
-  report.style.width = "720px";
-
-  if (!isMobile()) {
-    frame.style.height = "";
-    return;
-  }
-
-  const frameWidth = frame.clientWidth || window.innerWidth - 24;
-  const scale = Math.min(1, frameWidth / 720);
-  report.style.transform = `scale(${scale})`;
-  frame.style.height = `${Math.ceil(report.scrollHeight * scale)}px`;
-}
-
 function openExportModal(dataUrl, filename) {
   lastExportUrl = dataUrl;
   lastExportName = filename;
@@ -359,7 +344,6 @@ function downloadDataUrl(dataUrl, filename) {
 async function exportImage() {
   readFormIntoState();
   renderReport();
-  scalePreview();
   els.exportStatus.textContent = "正在生成图片…";
   els.exportBtn.disabled = true;
 
@@ -369,15 +353,20 @@ async function exportImage() {
     return;
   }
 
-  const prevTransform = els.report.style.transform;
-  const prevWidth = els.report.style.width;
+  // 离屏克隆固定 720 宽导出，不影响手机预览布局
+  const host = document.createElement("div");
+  host.setAttribute("aria-hidden", "true");
+  host.style.cssText =
+    "position:fixed;left:-10000px;top:0;width:720px;pointer-events:none;opacity:0;";
+  const clone = els.report.cloneNode(true);
+  clone.id = "report-export-clone";
+  clone.style.cssText =
+    "width:720px;max-width:720px;margin:0;transform:none;box-sizing:border-box;";
+  host.appendChild(clone);
+  document.body.appendChild(host);
 
   try {
-    // 导出时用完整宽度，避免手机缩放影响清晰度
-    els.report.style.transform = "none";
-    els.report.style.width = "720px";
-
-    const canvas = await html2canvas(els.report, {
+    const canvas = await html2canvas(clone, {
       backgroundColor: "#fbfcfe",
       scale: Math.min(2, window.devicePixelRatio || 2),
       useCORS: true,
@@ -392,7 +381,6 @@ async function exportImage() {
     const filename = `家庭收支报表-${stamp}.png`;
     const dataUrl = canvas.toDataURL("image/png");
 
-    // 微信 / 手机：弹层长按保存；电脑：尝试直接下载，并仍展示预览
     if (isWeChat() || isMobile()) {
       openExportModal(dataUrl, filename);
     } else {
@@ -405,11 +393,207 @@ async function exportImage() {
     console.error(err);
     els.exportStatus.textContent = "导出失败，请刷新后重试；微信里也可截图预览区域。";
   } finally {
-    els.report.style.transform = prevTransform;
-    els.report.style.width = prevWidth;
-    scalePreview();
+    host.remove();
     els.exportBtn.disabled = false;
   }
+}
+
+function parseSpokenAmount(text) {
+  const arabic = text.match(/(\d+(?:\.\d+)?)/);
+  if (arabic) return Number(arabic[1]);
+
+  const map = {
+    零: 0,
+    〇: 0,
+    一: 1,
+    二: 2,
+    两: 2,
+    三: 3,
+    四: 4,
+    五: 5,
+    六: 6,
+    七: 7,
+    八: 8,
+    九: 9,
+  };
+  let n = 0;
+  let current = 0;
+  let hasUnit = false;
+  for (const ch of text) {
+    if (map[ch] != null) {
+      current = map[ch];
+      continue;
+    }
+    if (ch === "十") {
+      n += (current || 1) * 10;
+      current = 0;
+      hasUnit = true;
+    } else if (ch === "百") {
+      n += (current || 1) * 100;
+      current = 0;
+      hasUnit = true;
+    } else if (ch === "千") {
+      n += (current || 1) * 1000;
+      current = 0;
+      hasUnit = true;
+    } else if (ch === "万") {
+      n = (n + current) * 10000;
+      current = 0;
+      hasUnit = true;
+    }
+  }
+  n += current;
+  return hasUnit || n > 0 ? n : null;
+}
+
+function guessCategory(text) {
+  const pairs = [
+    ["房", "固定支出"],
+    ["租", "固定支出"],
+    ["贷", "固定支出"],
+    ["花呗", "信用还款"],
+    ["信用卡", "信用还款"],
+    ["还款", "信用还款"],
+    ["药", "健康支出"],
+    ["医", "健康支出"],
+    ["媳妇", "家庭转账"],
+    ["转账", "家庭转账"],
+    ["外卖", "餐饮外卖"],
+    ["餐饮", "餐饮外卖"],
+    ["饭", "餐饮外卖"],
+    ["菜", "日常开销"],
+    ["超市", "日常开销"],
+    ["采买", "日常开销"],
+    ["加油", "交通出行"],
+    ["打车", "交通出行"],
+    ["地铁", "交通出行"],
+  ];
+  for (const [key, cat] of pairs) {
+    if (text.includes(key)) return cat;
+  }
+  return "其它支出";
+}
+
+function applyVoiceCommand(raw) {
+  const text = String(raw || "")
+    .replace(/\s+/g, "")
+    .replace(/[，。！？、]/g, "");
+  if (!text) return "没听清，请再说一次。";
+
+  const amount = parseSpokenAmount(text);
+
+  if (/工资|收入|实发/.test(text) && amount != null) {
+    state.salary = amount;
+    fillForm();
+    renderReport();
+    return `已设置工资为 ¥${money(amount)}`;
+  }
+
+  if (/结转|结余|上月/.test(text) && amount != null) {
+    state.carryover = amount;
+    fillForm();
+    renderReport();
+    return `已设置上月结转为 ¥${money(amount)}`;
+  }
+
+  if (/提醒|零花钱/.test(text)) {
+    state.reminder = raw.trim();
+    fillForm();
+    renderReport();
+    return "已更新零花钱提醒文案";
+  }
+
+  if (/支出|花费|开销|添加|记一笔|消费/.test(text) || amount != null) {
+    const category = guessCategory(text);
+    let item = text
+      .replace(/支出|花费|开销|添加|记一笔|消费|元|块钱|块/g, "")
+      .replace(/(\d+(?:\.\d+)?)/g, "")
+      .replace(/[零〇一二两三四五六七八九十百千万]/g, "")
+      .trim();
+    if (!item) item = category;
+    state.expenses.push({
+      category,
+      icon: iconFor(category),
+      item,
+      amount: amount || 0,
+      note: "语音录入",
+    });
+    fillForm();
+    renderReport();
+    return `已添加支出：${category} / ${item} / ¥${money(amount || 0)}`;
+  }
+
+  return `已识别「${raw}」，可说：工资八千、结转五百、支出房租两千五`;
+}
+
+function getSpeechRecognition() {
+  const Ctor = window.SpeechRecognition || window.webkitSpeechRecognition;
+  return Ctor ? new Ctor() : null;
+}
+
+function setVoiceUi(isOn, message) {
+  listening = isOn;
+  els.voiceBtn.classList.toggle("listening", isOn);
+  els.voiceBtn.textContent = isOn ? "⏹ 说完点停止" : "🎤 点一下说话";
+  if (message != null) els.voiceStatus.textContent = message;
+}
+
+function stopVoice() {
+  if (recognition) {
+    try {
+      recognition.stop();
+    } catch (_) {}
+  }
+  setVoiceUi(false);
+}
+
+function startVoice() {
+  const rec = getSpeechRecognition();
+  if (!rec) {
+    const tip = isWeChat()
+      ? "当前微信内置浏览器不支持网页语音识别。可点输入框，用系统键盘自带麦克风；或右上角 ··· → 在浏览器打开后再试。"
+      : "当前浏览器不支持语音识别，请用 Chrome / Edge，或用系统键盘麦克风。";
+    els.voiceStatus.textContent = tip;
+    return;
+  }
+
+  recognition = rec;
+  recognition.lang = "zh-CN";
+  recognition.continuous = false;
+  recognition.interimResults = false;
+  recognition.maxAlternatives = 1;
+
+  recognition.onstart = () => setVoiceUi(true, "正在听，请说话…");
+  recognition.onerror = (e) => {
+    const map = {
+      "not-allowed": "没有麦克风权限，请在系统设置里允许。",
+      "no-speech": "没有听到声音，请再试一次。",
+      network: "语音服务网络异常，请稍后重试。",
+      aborted: "",
+    };
+    setVoiceUi(false, map[e.error] || `语音失败：${e.error || "未知错误"}`);
+  };
+  recognition.onend = () => setVoiceUi(false, els.voiceStatus.textContent || "");
+  recognition.onresult = (event) => {
+    const said = event.results?.[0]?.[0]?.transcript || "";
+    const result = applyVoiceCommand(said);
+    els.voiceStatus.textContent = `识别：${said}。${result}`;
+  };
+
+  try {
+    recognition.start();
+  } catch (err) {
+    console.error(err);
+    els.voiceStatus.textContent = "无法启动语音，请刷新后重试。";
+  }
+}
+
+function toggleVoice() {
+  if (listening) {
+    stopVoice();
+    return;
+  }
+  startVoice();
 }
 
 function bind() {
@@ -423,6 +607,7 @@ function bind() {
   els.exportBtn.addEventListener("click", exportImage);
   els.saveBtn.addEventListener("click", saveToBrowser);
   els.resetBtn.addEventListener("click", resetSample);
+  els.voiceBtn.addEventListener("click", toggleVoice);
   els.exportModalClose.addEventListener("click", closeExportModal);
   els.exportModal.addEventListener("click", (e) => {
     if (e.target === els.exportModal) closeExportModal();
@@ -431,11 +616,13 @@ function bind() {
     if (!lastExportUrl) return;
     downloadDataUrl(lastExportUrl, lastExportName || "家庭收支报表.png");
   });
-  window.addEventListener("resize", scalePreview);
-  window.addEventListener("orientationchange", () => setTimeout(scalePreview, 100));
 }
 
 fillForm();
 renderReport();
 bind();
-scalePreview();
+
+if (isWeChat()) {
+  els.voiceHint.textContent =
+    "可以说：「工资八千」「结转五百」「支出房租两千五」。若微信不支持语音，可用输入框键盘麦克风，或右上角用浏览器打开。";
+}
