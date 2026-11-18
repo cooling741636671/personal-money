@@ -8,8 +8,9 @@
   <script src="vendor/html2canvas.min.js"></script>
 </head>
 <body>
+  <canvas id="bg-canvas" class="bg-canvas" aria-hidden="true"></canvas>
   <div class="app">
-    <aside class="editor">
+    <aside class="editor anim-rise">
       <h1 class="editor-title">编辑本月数据</h1>
       <p class="editor-hint">改完数据后下方会实时预览。微信里点「导出图片」后，长按图片保存即可。</p>
 
@@ -58,16 +59,20 @@
       <p id="export-status" class="export-status" aria-live="polite"></p>
     </aside>
 
-    <main class="preview-wrap">
+    <main class="preview-wrap anim-rise delay-1">
       <div class="preview-frame" id="preview-frame">
         <div id="report" class="report">
           <header class="report-header">
+            <div class="hero-deco">
+              <img src="assets/lotus.jpg" alt="" class="hero-lotus" width="160" height="160" />
+              <div class="hero-glow" aria-hidden="true"></div>
+            </div>
             <h1 id="report-title">本月家庭收支报表 <span class="emoji">💖</span></h1>
             <p id="report-subtitle">这爱的家庭账本 <span class="emoji">🧡</span></p>
           </header>
 
           <div class="top-cards">
-            <div class="card card-income">
+            <div class="card card-income anim-float">
               <div class="card-title">收入</div>
               <div class="card-body">
                 <div class="card-icon" aria-hidden="true">
@@ -79,7 +84,7 @@
                 </div>
               </div>
             </div>
-            <div class="card card-carry">
+            <div class="card card-carry anim-float delay-float">
               <div class="card-title">期初结余</div>
               <div class="card-body">
                 <div class="card-icon" aria-hidden="true">
@@ -93,7 +98,7 @@
             </div>
           </div>
 
-          <div class="disposable-bar">
+          <div class="disposable-bar anim-shimmer">
             本月可支配总额 <strong id="report-disposable">¥0.00</strong>
           </div>
 
@@ -148,6 +153,7 @@
     </div>
   </div>
 
+  <script src="bg-canvas.js"></script>
   <script src="app.js"></script>
 </body>
 </html>

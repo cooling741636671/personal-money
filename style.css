@@ -30,14 +30,22 @@ body {
   min-height: 100%;
   font-family: var(--font);
   color: var(--ink);
-  background:
-    radial-gradient(ellipse 80% 50% at 10% 0%, #dcecff 0%, transparent 55%),
-    radial-gradient(ellipse 60% 40% at 90% 10%, #e8f5e9 0%, transparent 50%),
-    linear-gradient(180deg, #f4f7fb 0%, #e8eef5 100%);
+  background: linear-gradient(180deg, #eef5fb 0%, #f7f0f4 48%, #eef6f1 100%);
   overflow-x: hidden;
 }
 
+.bg-canvas {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+}
+
 .app {
+  position: relative;
+  z-index: 1;
   display: grid;
   grid-template-columns: minmax(280px, 400px) 1fr;
   gap: 24px;
@@ -45,6 +53,82 @@ body {
   padding: 24px;
   max-width: 1400px;
   margin: 0 auto;
+}
+
+.anim-rise {
+  animation: rise-in 0.7s ease both;
+}
+
+.anim-rise.delay-1 {
+  animation-delay: 0.12s;
+}
+
+@keyframes rise-in {
+  from {
+    opacity: 0;
+    transform: translateY(18px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.anim-float {
+  animation: soft-float 4.8s ease-in-out infinite;
+}
+
+.anim-float.delay-float {
+  animation-delay: 1.2s;
+}
+
+@keyframes soft-float {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-5px);
+  }
+}
+
+.anim-shimmer {
+  position: relative;
+  overflow: hidden;
+}
+
+.anim-shimmer::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    110deg,
+    transparent 20%,
+    rgba(255, 255, 255, 0.45) 45%,
+    transparent 70%
+  );
+  transform: translateX(-120%);
+  animation: shimmer 3.6s ease-in-out infinite;
+}
+
+@keyframes shimmer {
+  0%,
+  35% {
+    transform: translateX(-120%);
+  }
+  70%,
+  100% {
+    transform: translateX(120%);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .anim-rise,
+  .anim-float,
+  .anim-shimmer::after,
+  .hero-lotus {
+    animation: none !important;
+  }
 }
 
 /* ---------- Editor ---------- */
@@ -314,6 +398,54 @@ body {
 .report-header {
   text-align: center;
   margin-bottom: 22px;
+}
+
+.hero-deco {
+  position: relative;
+  width: 120px;
+  height: 120px;
+  margin: 0 auto 10px;
+}
+
+.hero-lotus {
+  position: relative;
+  z-index: 1;
+  width: 120px;
+  height: 120px;
+  object-fit: cover;
+  border-radius: 50%;
+  box-shadow: 0 10px 24px rgba(220, 120, 150, 0.22);
+  animation: lotus-bob 5s ease-in-out infinite;
+}
+
+.hero-glow {
+  position: absolute;
+  inset: -8px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(255, 190, 210, 0.55), transparent 70%);
+  animation: glow-pulse 3.2s ease-in-out infinite;
+}
+
+@keyframes lotus-bob {
+  0%,
+  100% {
+    transform: translateY(0) rotate(-1deg);
+  }
+  50% {
+    transform: translateY(-6px) rotate(1deg);
+  }
+}
+
+@keyframes glow-pulse {
+  0%,
+  100% {
+    opacity: 0.55;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.9;
+    transform: scale(1.06);
+  }
 }
 
 .report-header h1 {
@@ -685,6 +817,17 @@ body {
 
   .report-header {
     margin-bottom: 14px;
+  }
+
+  .hero-deco {
+    width: 88px;
+    height: 88px;
+    margin-bottom: 6px;
+  }
+
+  .hero-lotus {
+    width: 88px;
+    height: 88px;
   }
 
   .report-header h1 {
